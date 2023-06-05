@@ -1,10 +1,10 @@
-import { NavLink } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 
 const Header = () => {
   return (
     <header className='sticky top-0 flex justify-between px-4 text-white bg-gray-800'>
       <nav className='container flex justify-between items-center mx-auto'>
-        <a href='#' className='flex junstify-left items-center space-x-3 text-white'>
+        <Link to='/' className='flex junstify-left items-center space-x-3 text-white'>
           <svg
             xmlns='http://www.w3.org/2000/svg'
             viewBox='0 0 24 24'
@@ -18,7 +18,7 @@ const Header = () => {
             />
           </svg>
           <p className='text-teal-300 font-mono text-xl font-semibold'>P.Manager</p>
-        </a>
+        </Link>
 
         <div className='hidden md:flex space-x-8 text-md font-semibold'>
           <NavLink
