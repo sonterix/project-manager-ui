@@ -4,7 +4,7 @@ import { useQuery } from '@apollo/client'
 
 import { GET_PROJECTS } from 'queries/project'
 import { Add, Edit, Trash } from 'icons'
-import { AddProjectModal, RemoveProjectModal, Error } from 'components'
+import { AddProjectModal, RemoveProjectModal, Error, EditProjectModal } from 'components'
 
 const Projects = () => {
   const navigate = useNavigate()
@@ -12,11 +12,18 @@ const Projects = () => {
   const { loading, data, error } = useQuery(GET_PROJECTS)
 
   const [isCreateModal, setCreateModal] = useState(false)
+  // Project data
+  const [editModal, setEditModal] = useState(null)
   // Client id as a value
   const [removeModal, setRemoveModal] = useState('')
 
   const handleSetCreateModal = state => () => {
     setCreateModal(state)
+  }
+
+  const handleSetEditModal = projectData => event => {
+    event?.stopPropagation()
+    setEditModal(projectData)
   }
 
   const handleSetRemoveModal = id => event => {
@@ -35,6 +42,7 @@ const Projects = () => {
   return (
     <>
       <AddProjectModal isActive={isCreateModal} onClose={handleSetCreateModal(false)} />
+      <EditProjectModal isActive={!!editModal} initData={editModal} onClose={handleSetEditModal(null)} />
       <RemoveProjectModal isActive={!!removeModal} projectId={removeModal} onClose={handleSetRemoveModal('')} />
 
       <section>
@@ -78,23 +86,25 @@ const Projects = () => {
                       className='border-t border-gray-700 bg-gray-800 hover:bg-teal-600 cursor-pointer'
                       onClick={handleOpenProject(_id)}
                     >
-                      <td className='px-3 py-2 whitespace-nowrap'>{client.name}</td>
-                      <td className='px-3 py-2 whitespace-nowrap'>{name}</td>
                       <td className='px-3 py-2 whitespace-nowrap'>{_id}</td>
+                      <td className='px-3 py-2 whitespace-nowrap'>{client?.name || '-'}</td>
+                      <td className='px-3 py-2 whitespace-nowrap'>{name}</td>
                       <td className='px-3 py-2 whitespace-nowrap'>{status}</td>
                       <td className='px-3 py-2'>{description || '-'}</td>
                       <td className='px-3 py-2'>
                         <button
                           type='button'
                           className='flex justify-center items-center w-6 h-6 bg-sky-600 hover:bg-sky-700 rounded-sm transition'
+                          onClick={handleSetEditModal({ _id, name, status, description, clientId: client?._id })}
                         >
                           <Edit className='w-4 h4' />
                         </button>
                       </td>
-                      <td className='px-3 py-2' onClick={handleSetRemoveModal(_id)}>
+                      <td className='px-3 py-2'>
                         <button
                           type='button'
                           className='flex justify-center items-center w-6 h-6 bg-rose-600 hover:bg-rose-700 rounded-sm transition'
+                          onClick={handleSetRemoveModal(_id)}
                         >
                           <Trash className='w-4 h4' />
                         </button>

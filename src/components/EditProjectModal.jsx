@@ -1,16 +1,20 @@
 import { useMutation, useQuery } from '@apollo/client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { GET_CLIENTS } from 'queries/client'
 import { GET_PROJECTS } from 'queries/project'
-import { ADD_PROJECT } from 'mutatuins/project'
+import { UPDATE_PROJECT } from 'mutatuins/project'
 
-const AddProjectModal = ({ isActive, onClose }) => {
+const EditProjectModal = ({ isActive, initData, onClose }) => {
   const { data } = useQuery(GET_CLIENTS)
-
-  const [addProject] = useMutation(ADD_PROJECT)
-
+  const [updateProject] = useMutation(UPDATE_PROJECT)
   const [form, setForm] = useState({})
+
+  useEffect(() => {
+    if (initData) {
+      setForm(initData)
+    }
+  }, [initData])
 
   const handleUpdateField = ({ target: { name, value } }) => {
     setForm(prev => ({ ...prev, [name]: value }))
@@ -20,20 +24,23 @@ const AddProjectModal = ({ isActive, onClose }) => {
     event.preventDefault()
 
     const variables = {
+      id: form?._id || null,
       clientId: form?.clientId || null,
       name: form?.name || null,
       description: form?.description || null,
       status: form?.status || null
     }
 
-    addProject({
+    updateProject({
       variables,
-      update: (cache, { data: { addProject } }) => {
+      update: (cache, { data: { updateProject } }) => {
         const { projects } = cache.readQuery({ query: GET_PROJECTS })
         cache.writeQuery({
           query: GET_PROJECTS,
           data: {
-            projects: [...projects, addProject]
+            projects: projects.map(project =>
+              project._id === variables.id ? { ...project, ...updateProject } : project
+            )
           }
         })
       }
@@ -47,7 +54,7 @@ const AddProjectModal = ({ isActive, onClose }) => {
     <>
       <div className='fixed inset-0 flex items-center justify-center z-30'>
         <div className='relative bg-gray-900 rounded-lg p-6 shadow-xl z-50'>
-          <h2 className='text-2xl font-bold mb-5'>Create Project</h2>
+          <h2 className='text-2xl font-bold mb-5'>Edit Project</h2>
 
           <form onSubmit={handleSubmit} className='max-w-md mx-auto'>
             <div className='mb-3'>
@@ -61,16 +68,12 @@ const AddProjectModal = ({ isActive, onClose }) => {
                 value={form?.clientId || ''}
                 onChange={handleUpdateField}
               >
-                <option value='' disabled>
-                  Select a client
-                </option>
-
                 {data?.clients.map(({ _id, name }) => (
                   <option key={_id} value={_id}>
                     {name}
                   </option>
                 )) || (
-                  <option value='loading' disabled>
+                  <option value='' disabled>
                     Loading...
                   </option>
                 )}
@@ -104,9 +107,6 @@ const AddProjectModal = ({ isActive, onClose }) => {
                 value={form?.status || ''}
                 onChange={handleUpdateField}
               >
-                <option value='' disabled>
-                  Select status
-                </option>
                 <option value='NEW'>Not Started</option>
                 <option value='PROGRESS'>In Progress</option>
                 <option value='DONE'>Done</option>
@@ -129,7 +129,7 @@ const AddProjectModal = ({ isActive, onClose }) => {
             </div>
 
             <button type='submit' className='px-4 py-2 w-full text-white bg-teal-600 hover:bg-teal-700 rounded-md'>
-              Create Project
+              Update Project
             </button>
           </form>
         </div>
@@ -140,4 +140,4 @@ const AddProjectModal = ({ isActive, onClose }) => {
   ) : null
 }
 
-export default AddProjectModal
+export default EditProjectModal

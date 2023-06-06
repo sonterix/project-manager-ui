@@ -3,17 +3,23 @@ import { useQuery } from '@apollo/client'
 
 import { GET_CLIENTS } from 'queries/client'
 import { AddUser, Edit, Trash } from 'icons'
-import { AddClientModal, RemoveClientModal, Error } from 'components'
+import { AddClientModal, RemoveClientModal, Error, EditClientModal } from 'components'
 
 const Clients = () => {
   const { loading, data, error } = useQuery(GET_CLIENTS)
 
   const [isCreateModal, setCreateModal] = useState(false)
+  // Client data
+  const [editModal, setEditModal] = useState(null)
   // Client id as a value
   const [removeModal, setRemoveModal] = useState('')
 
   const handleSetCreateModal = state => () => {
     setCreateModal(state)
+  }
+
+  const handleSetEditModal = clientData => () => {
+    setEditModal(clientData)
   }
 
   const handleSetRemoveModal = id => () => {
@@ -27,6 +33,7 @@ const Clients = () => {
   return (
     <>
       <AddClientModal isActive={isCreateModal} onClose={handleSetCreateModal(false)} />
+      <EditClientModal isActive={!!editModal} initData={editModal} onClose={handleSetEditModal(null)} />
       <RemoveClientModal isActive={!!removeModal} clientId={removeModal} onClose={handleSetRemoveModal('')} />
 
       <section>
@@ -74,6 +81,7 @@ const Clients = () => {
                         <button
                           type='button'
                           className='flex justify-center items-center w-6 h-6 bg-sky-600 hover:bg-sky-700 rounded-sm transition'
+                          onClick={handleSetEditModal({ _id, name, email, phone })}
                         >
                           <Edit className='w-4 h4' />
                         </button>
