@@ -1,6 +1,7 @@
 import { useMutation } from '@apollo/client'
 
 import { GET_CLIENTS } from 'queries/client'
+import { GET_PROJECTS } from 'queries/project'
 import { REMOVE_CLIENT } from 'mutatuins/client'
 
 const RemoveClient = ({ isActive, clientId, onClose }) => {
@@ -15,6 +16,14 @@ const RemoveClient = ({ isActive, clientId, onClose }) => {
           query: GET_CLIENTS,
           data: {
             clients: clients.filter(({ _id }) => _id !== deleteClient._id)
+          }
+        })
+
+        const { projects } = cache.readQuery({ query: GET_PROJECTS })
+        cache.writeQuery({
+          query: GET_PROJECTS,
+          data: {
+            projects: projects.filter(({ client }) => client._id !== deleteClient._id)
           }
         })
       }
