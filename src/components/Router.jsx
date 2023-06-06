@@ -5,6 +5,7 @@ import { Loading, NotFound } from 'components'
 
 const Clients = lazy(() => import('components/Clients'))
 const Projects = lazy(() => import('components/Projects'))
+const Project = lazy(() => import('components/Project'))
 
 const Router = () => {
   return (
@@ -14,6 +15,14 @@ const Router = () => {
         element={
           <Suspense fallback={<Loading />}>
             <Clients />
+          </Suspense>
+        }
+      />
+      <Route
+        path='/projects/:id'
+        element={
+          <Suspense fallback={<Loading />}>
+            <Project />
           </Suspense>
         }
       />

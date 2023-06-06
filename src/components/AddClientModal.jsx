@@ -1,6 +1,12 @@
+import { useMutation } from '@apollo/client'
 import { useState } from 'react'
 
-const AddClientModal = ({ isActive, onAdd, onClose }) => {
+import { GET_CLIENTS } from 'queries/client'
+import { ADD_CLIENT } from 'mutatuins/client'
+
+const AddClientModal = ({ isActive, onClose }) => {
+  const [addClient] = useMutation(ADD_CLIENT)
+
   const [form, setForm] = useState({})
 
   const handleUpdateField = ({ target: { name, value } }) => {
@@ -10,13 +16,27 @@ const AddClientModal = ({ isActive, onAdd, onClose }) => {
   const handleSubmit = event => {
     event.preventDefault()
 
-    onAdd({
+    const variables = {
       name: form?.name || null,
       email: form?.email || null,
       phone: form?.phone || null
+    }
+
+    addClient({
+      variables,
+      update: (cache, { data: { addClient } }) => {
+        const { clients } = cache.readQuery({ query: GET_CLIENTS })
+        cache.writeQuery({
+          query: GET_CLIENTS,
+          data: {
+            clients: [...clients, addClient]
+          }
+        })
+      }
     })
 
     setForm({})
+    onClose()
   }
 
   return isActive ? (

@@ -1,10 +1,14 @@
-import { useQuery } from '@apollo/client'
+import { useMutation, useQuery } from '@apollo/client'
 import { useState } from 'react'
 
 import { GET_CLIENTS } from 'queries/client'
+import { GET_PROJECTS } from 'queries/project'
+import { ADD_PROJECT } from 'mutatuins/project'
 
-const AddClientModal = ({ isActive, onAdd, onClose }) => {
+const AddClientModal = ({ isActive, onClose }) => {
   const { data } = useQuery(GET_CLIENTS)
+
+  const [addProject] = useMutation(ADD_PROJECT)
 
   const [form, setForm] = useState({})
 
@@ -15,14 +19,28 @@ const AddClientModal = ({ isActive, onAdd, onClose }) => {
   const handleSubmit = event => {
     event.preventDefault()
 
-    onAdd({
+    const variables = {
       clientId: form?.clientId || null,
       name: form?.name || null,
       description: form?.description || null,
       status: form?.status || null
+    }
+
+    addProject({
+      variables,
+      update: (cache, { data: { addProject } }) => {
+        const { projects } = cache.readQuery({ query: GET_PROJECTS })
+        cache.writeQuery({
+          query: GET_PROJECTS,
+          data: {
+            projects: [...projects, addProject]
+          }
+        })
+      }
     })
 
     setForm({})
+    onClose()
   }
 
   return isActive ? (

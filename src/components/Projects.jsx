@@ -1,15 +1,15 @@
 import { useState } from 'react'
-import { useMutation, useQuery } from '@apollo/client'
+import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@apollo/client'
 
 import { GET_PROJECTS } from 'queries/project'
-import { ADD_PROJECT, REMOVE_PROJECT } from 'mutatuins/project'
 import { Add, Edit, Trash } from 'icons'
-import { AddProjectModal, ConfirmModal, Error } from 'components'
+import { AddProjectModal, RemoveProjectModal, Error } from 'components'
 
 const Projects = () => {
+  const navigate = useNavigate()
+
   const { loading, data, error } = useQuery(GET_PROJECTS)
-  const [addProject] = useMutation(ADD_PROJECT)
-  const [removeProject] = useMutation(REMOVE_PROJECT)
 
   const [isCreateModal, setCreateModal] = useState(false)
   // Client id as a value
@@ -19,42 +19,13 @@ const Projects = () => {
     setCreateModal(state)
   }
 
-  const handleSetRemoveModal = id => () => {
+  const handleSetRemoveModal = id => event => {
+    event?.stopPropagation()
     setRemoveModal(id)
   }
 
-  const handleAddProject = ({ clientId, name, description, status }) => {
-    addProject({
-      variables: { clientId, name, description, status },
-      update: (cache, { data: { addProject } }) => {
-        const { projects } = cache.readQuery({ query: GET_PROJECTS })
-        cache.writeQuery({
-          query: GET_PROJECTS,
-          data: {
-            projects: [...projects, addProject]
-          }
-        })
-      }
-    })
-
-    setCreateModal(false)
-  }
-
-  const handleRemoveProject = () => {
-    removeProject({
-      variables: { id: removeModal },
-      update: (cache, { data: { deleteProject } }) => {
-        const { projects } = cache.readQuery({ query: GET_PROJECTS })
-        cache.writeQuery({
-          query: GET_PROJECTS,
-          data: {
-            projects: projects.filter(({ _id }) => _id !== deleteProject._id)
-          }
-        })
-      }
-    })
-
-    setRemoveModal('')
+  const handleOpenProject = id => () => {
+    navigate(`/projects/${id}`)
   }
 
   if (error) {
@@ -63,14 +34,8 @@ const Projects = () => {
 
   return (
     <>
-      <AddProjectModal isActive={isCreateModal} onAdd={handleAddProject} onClose={handleSetCreateModal(false)} />
-
-      <ConfirmModal
-        isActive={!!removeModal}
-        title='Are you sure?'
-        onConfirm={handleRemoveProject}
-        onClose={handleSetRemoveModal('')}
-      />
+      <AddProjectModal isActive={isCreateModal} onClose={handleSetCreateModal(false)} />
+      <RemoveProjectModal isActive={!!removeModal} projectId={removeModal} onClose={handleSetRemoveModal('')} />
 
       <section>
         <div className='flex justify-between items-center mb-4'>
@@ -99,22 +64,26 @@ const Projects = () => {
             <tbody className={loading ? 'animate-pulse' : ''}>
               {loading
                 ? [...Array(5)].map((_, index) => (
-                    <tr key={index} className='border-t border-gray-700'>
+                    <tr key={index} className='border-t bg-gray-800 border-gray-700'>
                       {[...Array(7)].map((_, idx) => (
-                        <td key={idx} className='px-3 py-2 bg-gray-800'>
+                        <td key={idx} className='px-3 py-2'>
                           &nbsp;
                         </td>
                       ))}
                     </tr>
                   ))
                 : data?.projects.map(({ _id, name, status, description, client }) => (
-                    <tr key={_id} className='border-t border-gray-700'>
-                      <td className='px-3 py-2 bg-gray-800 whitespace-nowrap'>{_id}</td>
-                      <td className='px-3 py-2 bg-gray-800 whitespace-nowrap'>{client.name}</td>
-                      <td className='px-3 py-2 bg-gray-800 whitespace-nowrap'>{name}</td>
-                      <td className='px-3 py-2 bg-gray-800 whitespace-nowrap'>{status}</td>
-                      <td className='px-3 py-2 bg-gray-800'>{description || '-'}</td>
-                      <td className='px-3 py-2 bg-gray-800'>
+                    <tr
+                      key={_id}
+                      className='border-t border-gray-700 bg-gray-800 hover:bg-teal-600 cursor-pointer'
+                      onClick={handleOpenProject(_id)}
+                    >
+                      <td className='px-3 py-2 whitespace-nowrap'>{client.name}</td>
+                      <td className='px-3 py-2 whitespace-nowrap'>{name}</td>
+                      <td className='px-3 py-2 whitespace-nowrap'>{_id}</td>
+                      <td className='px-3 py-2 whitespace-nowrap'>{status}</td>
+                      <td className='px-3 py-2'>{description || '-'}</td>
+                      <td className='px-3 py-2'>
                         <button
                           type='button'
                           className='flex justify-center items-center w-6 h-6 bg-sky-600 hover:bg-sky-700 rounded-sm transition'
@@ -122,7 +91,7 @@ const Projects = () => {
                           <Edit className='w-4 h4' />
                         </button>
                       </td>
-                      <td className='px-3 py-2 bg-gray-800' onClick={handleSetRemoveModal(_id)}>
+                      <td className='px-3 py-2' onClick={handleSetRemoveModal(_id)}>
                         <button
                           type='button'
                           className='flex justify-center items-center w-6 h-6 bg-rose-600 hover:bg-rose-700 rounded-sm transition'
