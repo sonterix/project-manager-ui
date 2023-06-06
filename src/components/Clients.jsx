@@ -2,30 +2,50 @@ import { useState } from 'react'
 import { useMutation, useQuery } from '@apollo/client'
 
 import { GET_CLIENTS } from 'queries/client'
-import { REMOVE_CLIENT } from 'mutatuins/client'
+import { ADD_CLIENT, REMOVE_CLIENT } from 'mutatuins/client'
 import { AddUser, Edit, Trash } from 'icons'
-import { ConfirmModal, Error, Loading } from 'components'
+import { AddClientModal, ConfirmModal, Error } from 'components'
 
 const Clients = () => {
   const { loading, data, error } = useQuery(GET_CLIENTS)
+  const [addClient] = useMutation(ADD_CLIENT)
   const [removeClient] = useMutation(REMOVE_CLIENT)
 
-  const [removingClientId, setRemovingClientId] = useState('')
+  const [isCreateModal, setCreateModal] = useState(false)
+  // Client id as a value
+  const [removeModal, setRemoveModal] = useState('')
 
-  const handleOpenModal = id => () => {
-    setRemovingClientId(id)
+  const handleSetCreateModal = state => () => {
+    setCreateModal(state)
   }
 
-  const handleCloseModal = () => {
-    setRemovingClientId('')
+  const handleSetRemoveModal = id => () => {
+    setRemoveModal(id)
+  }
+
+  const handleAddClient = ({ name, email, phone }) => {
+    addClient({
+      variables: { name, email, phone },
+      update: (cache, { data: { addClient } }) => {
+        const { clients } = cache.readQuery({ query: GET_CLIENTS })
+        cache.writeQuery({
+          query: GET_CLIENTS,
+          data: {
+            clients: [...clients, addClient]
+          }
+        })
+      }
+    })
+
+    setCreateModal(false)
   }
 
   const handleRemoveClient = () => {
     removeClient({
-      variables: { id: removingClientId },
-      update: (caches, { data: { deleteClient } }) => {
-        const { clients } = caches.readQuery({ query: GET_CLIENTS })
-        caches.writeQuery({
+      variables: { id: removeModal },
+      update: (cache, { data: { deleteClient } }) => {
+        const { clients } = cache.readQuery({ query: GET_CLIENTS })
+        cache.writeQuery({
           query: GET_CLIENTS,
           data: {
             clients: clients.filter(({ _id }) => _id !== deleteClient._id)
@@ -33,7 +53,8 @@ const Clients = () => {
         })
       }
     })
-    setRemovingClientId('')
+
+    setRemoveModal('')
   }
 
   if (error) {
@@ -42,18 +63,24 @@ const Clients = () => {
 
   return (
     <>
+      <AddClientModal isActive={isCreateModal} onAdd={handleAddClient} onClose={handleSetCreateModal(false)} />
+
       <ConfirmModal
-        isActive={!!removingClientId}
+        isActive={!!removeModal}
         title='Are you sure?'
         onConfirm={handleRemoveClient}
-        onCancel={handleCloseModal}
+        onClose={handleSetRemoveModal('')}
       />
 
       <section>
         <div className='flex justify-between items-center mb-5'>
           <h1 className='text-3xl font-bold'>Clients</h1>
 
-          <button type='button' className='p-2 bg-emerald-600 hover:bg-emerald-700 rounded-md transition'>
+          <button
+            type='button'
+            className='p-2 bg-emerald-600 hover:bg-emerald-700 rounded-md transition'
+            onClick={handleSetCreateModal(true)}
+          >
             <AddUser className='w-5 h-5' />
           </button>
         </div>
@@ -98,7 +125,7 @@ const Clients = () => {
                         <button
                           type='button'
                           className='flex justify-center items-center w-6 h-6 bg-rose-600 hover:bg-rose-700 rounded-sm transition'
-                          onClick={handleOpenModal(_id)}
+                          onClick={handleSetRemoveModal(_id)}
                         >
                           <Trash className='w-4 h4' />
                         </button>

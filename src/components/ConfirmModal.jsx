@@ -1,4 +1,4 @@
-const ConfirmModal = ({ isActive, title, onConfirm, onCancel }) => {
+const ConfirmModal = ({ isActive, title, onConfirm, onClose }) => {
   return isActive ? (
     <>
       <div className='fixed inset-0 flex items-center justify-center z-30'>
@@ -9,7 +9,7 @@ const ConfirmModal = ({ isActive, title, onConfirm, onCancel }) => {
             <button
               type='button'
               className='px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md'
-              onClick={onCancel}
+              onClick={onClose}
             >
               Cancel
             </button>
@@ -23,7 +23,7 @@ const ConfirmModal = ({ isActive, title, onConfirm, onCancel }) => {
           </div>
         </div>
 
-        <div className='fixed inset-0 bg-black opacity-60 z-40' onClick={onCancel} />
+        <div className='fixed inset-0 bg-black opacity-50 z-40' onClick={onClose} />
       </div>
     </>
   ) : null
